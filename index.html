@@ -344,11 +344,18 @@ font-size: 14px;
                 display: none;
             }
         }
-        @media (max-width: 480px) {
+@media (max-width: 480px) {
             .sungkup-charts {
                 grid-template-columns: 1fr;
             }
-.header {
+            .sungkup-cards {
+                grid-template-columns: 1fr;
+            }
+            .schedule-inputs {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .header {
                 padding: 0 15px 0 70px;
             }
             .logo-text {
@@ -364,8 +371,7 @@ font-size: 14px;
                 left: 15px;
             }
         }
-
-        /* MQTT Status Indicator */
+/* MQTT Status Indicator */
         .mqtt-status {
             position: fixed;
             top: 80px;
@@ -558,8 +564,7 @@ font-size: 14px;
                         <i class="fas fa-seedling"></i>
                         <span>Sungkup 1</span>
                     </div>
-                    
-                    <div class="sungkup-cards">
+                    <div class="sungkup-cards grid grid-cols-1 md:grid-cols-3 gap-4">
                         <!-- Soil Moisture 1 -->
                         <div class="card">
                             <div class="parameter-title">
@@ -589,7 +594,7 @@ font-size: 14px;
                         </div>
                         
                         <!-- Soil Moisture 3 -->
-                        <div class="card">
+                        <div class="card md:col-span-3 lg:col-span-1">
                             <div class="parameter-title">
                                 <i class="fas fa-tint"></i>
                                 <span>Soil Moisture 3</span>
@@ -602,7 +607,7 @@ font-size: 14px;
                             </div>
                         </div>
                     </div>
-                    <div class="sungkup-charts grid grid-cols-1 xl:grid-cols-2 gap-4">
+<div class="sungkup-charts grid grid-cols-1 xl:grid-cols-2 gap-4">
 <!-- Average Moisture Chart -->
                         <div class="card order-1">
 <div class="parameter-title">
@@ -632,8 +637,7 @@ font-size: 14px;
                         <i class="fas fa-seedling"></i>
                         <span>Sungkup 2</span>
                     </div>
-                    
-                    <div class="sungkup-cards">
+                    <div class="sungkup-cards grid grid-cols-1 md:grid-cols-3 gap-4">
                         <!-- Soil Moisture 1 -->
                         <div class="card">
                             <div class="parameter-title">
@@ -663,7 +667,7 @@ font-size: 14px;
                         </div>
                         
                         <!-- Soil Moisture 3 -->
-                        <div class="card">
+                        <div class="card md:col-span-3 lg:col-span-1">
                             <div class="parameter-title">
                                 <i class="fas fa-tint"></i>
                                 <span>Soil Moisture 3</span>
@@ -676,7 +680,7 @@ font-size: 14px;
                             </div>
                         </div>
                     </div>
-                    <div class="sungkup-charts grid grid-cols-1 xl:grid-cols-2 gap-4">
+<div class="sungkup-charts grid grid-cols-1 xl:grid-cols-2 gap-4">
 <!-- Average Moisture Chart -->
                         <div class="card order-1">
                             <div class="parameter-title">
@@ -745,10 +749,10 @@ font-size: 14px;
                         <i class="fas fa-calendar-alt"></i>
                         <span>Watering Schedule</span>
                     </div>
-                    <div class="schedule-inputs" id="schedule-inputs-container">
+                    <div class="schedule-inputs grid grid-cols-1 md:grid-cols-5 gap-4" id="schedule-inputs-container">
                         <!-- Schedule inputs will be dynamically generated here -->
                     </div>
-                </div>
+</div>
             </div>
         </section>
         <!-- Manual Control Section -->
