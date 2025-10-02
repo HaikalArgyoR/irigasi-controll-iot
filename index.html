@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Irigasi-IoT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --forest-green: #228B22;
+            --leaf-green: #4CAF50;
+            --mint-green: #98FB98;
+            --wood-brown: #8B4513;
+            --light-wood: #DEB887;
+            --white: #ffffff;
+            --alert-red: #FF5252;
+            --earth-brown: #A0522D;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, var(--forest-green), var(--leaf-green));
+color: var(--navy-blue);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .header {
+            background-color: rgba(34, 139, 34, 0.8);
+            backdrop-filter: blur(5px);
+height: 70px;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            color: var(--aqua);
+            animation: wave 3s infinite ease-in-out;
+        }
+
+        .logo-text {
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .sidebar {
+            width: 80px;
+            background-color: var(--leaf-green);
+            background-image: url('https://i.pinimg.com/736x/00/b6/59/00b65971530fcc944d0a44303bcda7ce.jpg');
+            background-size: cover;
+            background-blend-mode: multiply;
+height: calc(100vh - 70px);
+            position: fixed;
+            top: 70px;
+            left: 0;
+            transition: width 0.3s ease;
+            overflow: hidden;
+            z-index: 900;
+        }
+
+        .sidebar:hover {
+            width: 220px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .menu-item:hover {
+            background-color: rgba(152, 251, 152, 0.3);
+        }
+
+        .menu-item:hover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.4), transparent);
+            animation: waveHover 1.5s infinite;
+}
+
+        .menu-icon {
+            font-size: 20px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .menu-text {
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar:hover .menu-text,
+        .sidebar.mobile-active .menu-text {
+            opacity: 1;
+        }
+
+        .main-content {
+            margin-left: 80px;
+            margin-top: 70px;
+            padding: 30px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar:hover ~ .main-content {
+            margin-left: 220px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid var(--leaf-green);
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background-image: url("data:image/png;base64,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");
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.3;
+}
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .parameter-title {
+            font-size: 14px;
+            color: var(--navy-blue);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .parameter-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--navy-blue);
+            margin: 10px 0;
+        }
+        .parameter-unit {
+            font-size: 16px;
+            color: var(--forest-green);
+margin-left: 5px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--mint-green), var(--leaf-green));
+border-radius: 4px;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--light-wood), var(--mint-green));
+outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: 2px solid var(--teal);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233e92cc'%3E%3Cpath d='M12,20A6,6 0 0,1 6,14C6,10 12,3.25 12,3.25C12,3.25 18,10 18,14A6,6 0 0,1 12,20Z' /%3E%3C/svg%3E");
+            background-size: 60%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin: 30px 0;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transform: translateX(150%);
+            transition: transform 0.5s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 20px;
+            min-width: 30px;
+            text-align: center;
+        }
+        .notification.warning {
+            border-left: 5px solid var(--earth-brown);
+        }
+
+        .notification.critical {
+            border-left: 5px solid var(--alert-red);
+        }
+
+        .notification.safe {
+            border-left: 5px solid var(--leaf-green);
+}
+
+        .footer {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            text-align: center;
+            margin-top: 40px;
+            border-radius: 16px 16px 0 0;
+        }
+        .copyright {
+            color: var(--forest-green);
+font-size: 14px;
+        }
+
+        @keyframes waveHover {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes wavePulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                left: -100%;
+                transition: left 0.3s ease;
+            }
+            .sidebar.mobile-active {
+                left: 0;
+                width: 220px;
+            }
+            .sidebar.mobile-active .menu-text {
+                opacity: 1;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .main-content.mobile-active {
+                margin-left: 220px;
+            }
+            .parameter-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            .mobile-menu-toggle {
+                display: block;
+                position: fixed;
+                top: 23px;
+                left: 20px;
+                z-index: 1100;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+            }
+            .header {
+                padding-left: 70px;
+                justify-content: flex-start;
+                gap: 10px;
+            }
+            .logo {
+                margin-left: 10px;
+            }
+        }
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+        @media (max-width: 480px) {
+            .sungkup-charts {
+                grid-template-columns: 1fr;
+            }
+.header {
+                padding: 0 15px 0 70px;
+            }
+            .logo-text {
+                font-size: 18px;
+            }
+            .main-content {
+                padding: 20px 15px;
+            }
+            .parameter-grid {
+                grid-template-columns: 1fr;
+            }
+            .mobile-menu-toggle {
+                left: 15px;
+            }
+        }
+
+        /* MQTT Status Indicator */
+        .mqtt-status {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-connected {
+            background: #00ff00;
+            box-shadow: 0 0 8px #00ff00;
+        }
+        .status-disconnected {
+            background: #ff0000;
+            box-shadow: 0 0 8px #ff0000;
+        }
+        
+        /* New styles for the overhauled sections */
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+.sungkup-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .sungkup-section {
+            flex: 1;
+            min-width: 400px;
+        }
+.sungkup-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        .sungkup-header {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sungkup-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .sungkup-charts {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 768px) {
+            .sungkup-section {
+                min-width: 100%;
+            }
+        }
+.irrigation-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .irrigation-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .irrigation-schedule {
+            margin-top: 20px;
+        }
+        
+        .schedule-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .time-input {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .current-time {
+            font-size: 1.1rem;
+            color: white;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- MQTT Status Indicator -->
+    <div class="mqtt-status">
+        <span class="status-indicator status-disconnected" id="mqtt-status-indicator"></span>
+        <span id="mqtt-status-text">MQTT: Disconnected</span>
+                    </div>
+<!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="logo_ikan.png" alt="AquaDrum" class="h-16 w-16 object-contain aspect-square">
+            </div>
+            <div class="logo-text">Sistem Monitoring dan Kontrol Sistem Irigasi</div>
+</div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <a href="#dashboard" class="menu-item">
+            <div class="menu-icon">
+                <i class="fas fa-home"></i>
+            </div>
+            <div class="menu-text">Dashboard</div>
+        </a>
+        <a href="#dashboard" class="menu-item">
+            <div class="menu-icon">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <div class="menu-text">Sungkup 1</div>
+        </a>
+        <a href="#sungkup2" class="menu-item">
+            <div class="menu-icon">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <div class="menu-text">Sungkup 2</div>
+        </a>
+        <a href="#irrigation" class="menu-item">
+            <div class="menu-icon">
+                <i class="fas fa-tint"></i>
+            </div>
+            <div class="menu-text">Irrigation Nozzle</div>
+        </a>
+        <a href="#manual-control" class="menu-item">
+            <div class="menu-icon">
+                <i class="fas fa-faucet"></i>
+            </div>
+            <div class="menu-text">Manual Control</div>
+        </a>
+</nav>
+
+    <!-- Mobile Sidebar Toggle -->
+    <div class="mobile-menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="mb-10">
+            <div id="sungkup1"></div>
+<h2 class="text-2xl font-semibold text-white mb-6">Dashboard</h2>
+            <!-- Sungkup 1 Section -->
+            <div class="sungkup-container">
+                <div class="sungkup-section">
+<div class="sungkup-header">
+                        <i class="fas fa-seedling"></i>
+                        <span>Sungkup 1</span>
+                    </div>
+                    
+                    <div class="sungkup-cards">
+                        <!-- Soil Moisture 1 -->
+                        <div class="card">
+                            <div class="parameter-title">
+                                <i class="fas fa-tint"></i>
+                                <span>Soil Moisture 1</span>
+                            </div>
+                            <div class="parameter-value">
+                                <span id="soil-moisture-1">0</span><span class="parameter-unit">%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="soil-moisture-1-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Soil Moisture 2 -->
+                        <div class="card">
+                            <div class="parameter-title">
+                                <i class="fas fa-tint"></i>
+                                <span>Soil Moisture 2</span>
+                            </div>
+                            <div class="parameter-value">
+                                <span id="soil-moisture-2">0</span><span class="parameter-unit">%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="soil-moisture-2-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Soil Moisture 3 -->
+                        <div class="card">
+                            <div class="parameter-title">
+                                <i class="fas fa-tint"></i>
+                                <span>Soil Moisture 3</span>
+                            </div>
+                            <div class="parameter-value">
+                                <span id="soil-moisture-3">0</span><span class="parameter-unit">%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="soil-moisture-3-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sungkup-charts grid grid-cols-1 xl:grid-cols-2 gap-4">
+<!-- Average Moisture Chart -->
+                        <div class="card order-1">
+<div class="parameter-title">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Average Moisture</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="avg-moisture-chart-1"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Air Temperature Chart -->
+                        <div class="card order-3 md:order-2">
+<div class="parameter-title">
+                                <i class="fas fa-thermometer-half"></i>
+                                <span>Air Temperature</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="air-temp-chart-1"></canvas>
+                            </div>
+                        </div>
+                    </div>
+</div>
+        <!-- Sungkup 2 Section -->
+        <div id="sungkup2" class="sungkup-section">
+<div class="sungkup-header">
+                        <i class="fas fa-seedling"></i>
+                        <span>Sungkup 2</span>
+                    </div>
+                    
+                    <div class="sungkup-cards">
+                        <!-- Soil Moisture 1 -->
+                        <div class="card">
+                            <div class="parameter-title">
+                                <i class="fas fa-tint"></i>
+                                <span>Soil Moisture 1</span>
+                            </div>
+                            <div class="parameter-value">
+                                <span id="soil-moisture-21">0</span><span class="parameter-unit">%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="soil-moisture-21-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Soil Moisture 2 -->
+                        <div class="card">
+                            <div class="parameter-title">
+                                <i class="fas fa-tint"></i>
+                                <span>Soil Moisture 2</span>
+                            </div>
+                            <div class="parameter-value">
+                                <span id="soil-moisture-22">0</span><span class="parameter-unit">%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="soil-moisture-22-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Soil Moisture 3 -->
+                        <div class="card">
+                            <div class="parameter-title">
+                                <i class="fas fa-tint"></i>
+                                <span>Soil Moisture 3</span>
+                            </div>
+                            <div class="parameter-value">
+                                <span id="soil-moisture-23">0</span><span class="parameter-unit">%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="soil-moisture-23-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sungkup-charts grid grid-cols-1 xl:grid-cols-2 gap-4">
+<!-- Average Moisture Chart -->
+                        <div class="card order-1">
+                            <div class="parameter-title">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Average Moisture</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="avg-moisture-chart-2"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Air Temperature Chart -->
+                        <div class="card order-3 md:order-2">
+                            <div class="parameter-title">
+                                <i class="fas fa-thermometer-half"></i>
+                                <span>Air Temperature</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="air-temp-chart-2"></canvas>
+                            </div>
+                        </div>
+                    </div>
+</div>
+            </div>
+        </section>
+
+        <!-- Irrigation Nozzle Section -->
+        <section id="irrigation" class="irrigation-section">
+            <h2 class="text-2xl font-semibold text-white mb-6">Irrigation Nozzle</h2>
+            
+            <div class="irrigation-controls">
+                <!-- Watering Frequency -->
+                <div class="card">
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Number of Waterings</span>
+                            <span id="watering-frequency-value">0x</span>
+                        </div>
+                        <input type="range" min="0" max="5" value="0" class="range-slider" id="watering-frequency" oninput="updateWateringFrequency()">
+                    </div>
+                </div>
+                
+                <!-- Watering Duration -->
+                <div class="card">
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Watering Duration</span>
+                            <span id="watering-duration-value">0 min</span>
+                        </div>
+                        <input type="range" min="0" max="60" value="0" class="range-slider" id="watering-duration" oninput="updateWateringDuration()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Current Time Display -->
+            <div class="current-time">
+                <i class="fas fa-clock"></i>
+                <span id="current-time">Loading...</span>
+                <span>(WIB - West Indonesia Time)</span>
+            </div>
+            
+            <!-- Watering Schedule -->
+            <div class="irrigation-schedule">
+                <div class="card">
+                    <div class="parameter-title">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Watering Schedule</span>
+                    </div>
+                    <div class="schedule-inputs" id="schedule-inputs-container">
+                        <!-- Schedule inputs will be dynamically generated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Manual Control Section -->
+        <section id="manual-control" class="mt-10">
+            <div class="sungkup-section">
+                <div class="sungkup-header">
+                    <i class="fas fa-faucet"></i>
+                    <span>Manual Control</span>
+                </div>
+                <div class="card">
+                    <div class="parameter-title">
+                        <i class="fas fa-water"></i>
+                        <span>Manual Water Valve Control</span>
+                    </div>
+                    <div class="flex gap-4 mt-4">
+                        <button id="manual-on" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded" onclick="publishManualControl('ON')">
+                            <i class="fas fa-toggle-on mr-2"></i>Turn ON
+                        </button>
+                        <button id="manual-off" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" onclick="publishManualControl('OFF')">
+                            <i class="fas fa-toggle-off mr-2"></i>Turn OFF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+<!-- MQTT Library -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.6.1/mqtt.min.js"></script>
+
+        <script>
+            // ========== MQTT CONFIGURATION ==========
+            // IMPORTANT: use WSS when hosting on HTTPS (GitHub Pages)
+            const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+            
+            // Sungkup 1 topics
+            const topicSoilMoisture1 = "tes/34235/topic/kelembaban1";
+            const topicSoilMoisture2 = "tes/34235/topic/kelembaban2";
+            const topicSoilMoisture3 = "tes/34235/topic/kelembaban3";
+            const topicAvgMoisture1 = "tes/34235/topic/kelembabanAVG";
+            const topicAirTemp1 = "tes/34235/topic/suhu1";
+            
+            // Sungkup 2 topics
+            const topicSoilMoisture21 = "tes/34235/topic/kelembaban21";
+            const topicSoilMoisture22 = "tes/34235/topic/kelembaban22";
+            const topicSoilMoisture23 = "tes/34235/topic/kelembaban23";
+            const topicAvgMoisture2 = "tes/34235/topic/kelembabanAVG2";
+            const topicAirTemp2 = "tes/34235/topic/suhu2";
+            // Irrigation topics
+            const topicWateringFrequency = "tes/34235/topic/sumsiram";
+            const topicManualControl = "tes/34235/topic/manual";
+const topicWateringDuration = "tes/34235/topic/dursiram";
+            const topicSchedule1 = "tes/34235/topic/jadwal1";
+            const topicSchedule2 = "tes/34235/topic/jadwal2";
+            const topicSchedule3 = "tes/34235/topic/jadwal3";
+            const topicSchedule4 = "tes/34235/topic/jadwal4";
+            const topicSchedule5 = "tes/34235/topic/jadwal5";
+
+            const publishOptions = { qos: 1, retain: true };
+
+            // MQTT Client - add a lightweight clientId to help broker
+            const clientId = 'webclient-' + Math.random().toString(16).substr(2, 8);
+            const client = mqtt.connect(brokerUrl, { reconnectPeriod: 2000, clientId: clientId, connectTimeout: 30_000 });
+
+            client.on('connect', () => {
+                console.log('MQTT connected to Bioflok System');
+                
+                // Subscribe to all topics
+                const topics = [
+                    topicSoilMoisture1, topicSoilMoisture2, topicSoilMoisture3, 
+                    topicAvgMoisture1, topicAirTemp1,
+                    topicSoilMoisture21, topicSoilMoisture22, topicSoilMoisture23,
+                    topicAvgMoisture2, topicAirTemp2,
+                    topicWateringFrequency, topicWateringDuration,
+                    topicSchedule1, topicSchedule2, topicSchedule3, topicSchedule4, topicSchedule5
+                ];
+                
+                client.subscribe(topics, { qos: 0 }, (err) => {
+                    if (err) console.warn('Subscribe error', err);
+                });
+                
+                // Update MQTT status
+                document.getElementById('mqtt-status-indicator').className = 'status-indicator status-connected';
+                document.getElementById('mqtt-status-text').textContent = 'MQTT: Connected';
+                
+                showNotification('safe', 'MQTT Connected', 'Terhubung ke broker MQTT');
+            });
+
+            client.on('message', (topic, message) => {
+                const msg = message.toString();
+                console.log(`Received from ${topic}: ${msg}`);
+                
+                try {
+                    const value = parseFloat(msg);
+                    if (isNaN(value)) {
+                        console.error(`Invalid number received: ${msg}`);
+                        return;
+                    }
+                    
+                    // Sungkup 1
+                    if (topic === topicSoilMoisture1) {
+                        document.getElementById('soil-moisture-1').textContent = value.toFixed(1);
+                        updateProgressBar('soil-moisture-1', value);
+                    } else if (topic === topicSoilMoisture2) {
+                        document.getElementById('soil-moisture-2').textContent = value.toFixed(1);
+                        updateProgressBar('soil-moisture-2', value);
+                    } else if (topic === topicSoilMoisture3) {
+                        document.getElementById('soil-moisture-3').textContent = value.toFixed(1);
+                        updateProgressBar('soil-moisture-3', value);
+                    } else if (topic === topicAvgMoisture1) {
+                        updateChartData(avgMoistureChart1, value);
+                    } else if (topic === topicAirTemp1) {
+                        updateChartData(airTempChart1, value);
+                    }
+                    
+                    // Sungkup 2
+                    else if (topic === topicSoilMoisture21) {
+                        document.getElementById('soil-moisture-21').textContent = value.toFixed(1);
+                        updateProgressBar('soil-moisture-21', value);
+                    } else if (topic === topicSoilMoisture22) {
+                        document.getElementById('soil-moisture-22').textContent = value.toFixed(1);
+                        updateProgressBar('soil-moisture-22', value);
+                    } else if (topic === topicSoilMoisture23) {
+                        document.getElementById('soil-moisture-23').textContent = value.toFixed(1);
+                        updateProgressBar('soil-moisture-23', value);
+                    } else if (topic === topicAvgMoisture2) {
+                        updateChartData(avgMoistureChart2, value);
+                    } else if (topic === topicAirTemp2) {
+                        updateChartData(airTempChart2, value);
+                    }
+                    
+                    // Irrigation
+                    else if (topic === topicWateringFrequency) {
+                        document.getElementById('watering-frequency').value = value;
+                        document.getElementById('watering-frequency-value').textContent = `${value}x`;
+                        updateScheduleInputs(value);
+                    } else if (topic === topicWateringDuration) {
+                        document.getElementById('watering-duration').value = value;
+                        document.getElementById('watering-duration-value').textContent = `${value} min`;
+                    }
+                    
+                    // Schedule topics (handle as strings)
+                    else if (topic.startsWith('tes/34235/topic/jadwal')) {
+                        const scheduleIndex = topic.slice(-1);
+                        const inputElement = document.getElementById(`schedule-${scheduleIndex}`);
+                        if (inputElement) {
+                            inputElement.value = msg;
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Error processing MQTT message:', error);
+                }
+            });
+
+            client.on('error', (error) => {
+                console.error('MQTT error:', error);
+                document.getElementById('mqtt-status-indicator').className = 'status-indicator status-disconnected';
+                document.getElementById('mqtt-status-text').textContent = 'MQTT: Error';
+                showNotification('critical', 'MQTT Error', 'Koneksi MQTT bermasalah');
+            });
+
+            client.on('reconnect', () => {
+                document.getElementById('mqtt-status-indicator').className = 'status-indicator status-disconnected';
+                document.getElementById('mqtt-status-text').textContent = 'MQTT: Reconnecting';
+            });
+
+            client.on('close', () => {
+                document.getElementById('mqtt-status-indicator').className = 'status-indicator status-disconnected';
+                document.getElementById('mqtt-status-text').textContent = 'MQTT: Disconnected';
+            });
+            // Publish manual control command
+            function publishManualControl(command) {
+                publish(topicManualControl, command);
+                showNotification('safe', 'Manual Control', `Water valve turned ${command}`);
+            }
+
+            // Helper function to publish MQTT messages
+            function publish(topic, payload) {
+if (client.connected) {
+                    client.publish(topic, String(payload), publishOptions, (err) => {
+                        if (err) console.error('Publish error', err);
+                    });
+                    console.log(`Published to ${topic}: ${payload}`);
+                } else {
+                    console.warn('Cannot publish, MQTT client not connected');
+                }
+            }
+
+            // Update progress bars based on sensor values
+            function updateProgressBar(parameter, value) {
+                let progressBar;
+                
+                switch(parameter) {
+                    case 'soil-moisture-1':
+                        progressBar = document.getElementById('soil-moisture-1-progress');
+                        break;
+                    case 'soil-moisture-2':
+                        progressBar = document.getElementById('soil-moisture-2-progress');
+                        break;
+                    case 'soil-moisture-3':
+                        progressBar = document.getElementById('soil-moisture-3-progress');
+                        break;
+                    case 'soil-moisture-21':
+                        progressBar = document.getElementById('soil-moisture-21-progress');
+                        break;
+                    case 'soil-moisture-22':
+                        progressBar = document.getElementById('soil-moisture-22-progress');
+                        break;
+                    case 'soil-moisture-23':
+                        progressBar = document.getElementById('soil-moisture-23-progress');
+                        break;
+                    default:
+                        return;
+                }
+                
+                if (progressBar) {
+                    progressBar.style.width = `${Math.max(0, Math.min(100, value))}%`;
+                }
+            }
+
+            // Initialize charts
+            let avgMoistureChart1, avgMoistureChart2, airTempChart1, airTempChart2;
+            
+            function initializeCharts() {
+                // Sungkup 1 - Average Moisture Chart
+                const avgMoistureCtx1 = document.getElementById('avg-moisture-chart-1').getContext('2d');
+                avgMoistureChart1 = new Chart(avgMoistureCtx1, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Average Moisture (%)',
+                            data: [],
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+tension: 0.1,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                display: false
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Sungkup 1 - Air Temperature Chart
+                const airTempCtx1 = document.getElementById('air-temp-chart-1').getContext('2d');
+                airTempChart1 = new Chart(airTempCtx1, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Air Temperature (°C)',
+                            data: [],
+                            borderColor: '#A0522D',
+                            backgroundColor: 'rgba(160, 82, 45, 0.1)',
+tension: 0.1,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                display: false
+                            },
+                            y: {
+                                beginAtZero: false,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Sungkup 2 - Average Moisture Chart
+                const avgMoistureCtx2 = document.getElementById('avg-moisture-chart-2').getContext('2d');
+                avgMoistureChart2 = new Chart(avgMoistureCtx2, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Average Moisture (%)',
+                            data: [],
+                            borderColor: '#228B22',
+                            backgroundColor: 'rgba(34, 139, 34, 0.1)',
+tension: 0.1,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                display: false
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Sungkup 2 - Air Temperature Chart
+                const airTempCtx2 = document.getElementById('air-temp-chart-2').getContext('2d');
+                airTempChart2 = new Chart(airTempCtx2, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Air Temperature (°C)',
+                            data: [],
+                            borderColor: '#8B4513',
+                            backgroundColor: 'rgba(139, 69, 19, 0.1)',
+tension: 0.1,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                display: false
+                            },
+                            y: {
+                                beginAtZero: false,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Update chart data
+            function updateChartData(chart, value) {
+                const now = new Date();
+                const timeLabel = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                chart.data.labels.push(timeLabel);
+                chart.data.datasets[0].data.push(value);
+                
+                if (chart.data.labels.length > 10) {
+                    chart.data.labels.shift();
+                    chart.data.datasets[0].data.shift();
+                }
+                
+                chart.update({ duration: 0 });
+            }
+
+            // Irrigation functions
+            function updateWateringFrequency() {
+                const value = document.getElementById('watering-frequency').value;
+                document.getElementById('watering-frequency-value').textContent = `${value}x`;
+                publish(topicWateringFrequency, value);
+                updateScheduleInputs(value);
+            }
+            
+            function updateWateringDuration() {
+                const value = document.getElementById('watering-duration').value;
+                document.getElementById('watering-duration-value').textContent = `${value} min`;
+                publish(topicWateringDuration, value);
+            }
+            
+            function updateScheduleInputs(count) {
+                const container = document.getElementById('schedule-inputs-container');
+                container.innerHTML = '';
+                
+                const scheduleTopics = [topicSchedule1, topicSchedule2, topicSchedule3, topicSchedule4, topicSchedule5];
+                
+                for (let i = 1; i <= count; i++) {
+                    const input = document.createElement('input');
+                    input.type = 'time';
+                    input.className = 'time-input';
+                    input.id = `schedule-${i}`;
+                    input.placeholder = 'HH:MM';
+                    input.addEventListener('change', function() {
+                        publish(scheduleTopics[i-1], this.value);
+                    });
+                    
+                    const label = document.createElement('div');
+                    label.className = 'text-sm text-white mb-1';
+                    label.textContent = `Schedule ${i}`;
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(input);
+                    container.appendChild(wrapper);
+                }
+            }
+            
+            // Update current time
+            function updateCurrentTime() {
+                const now = new Date();
+                // Convert to WIB timezone (UTC+7)
+                const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+                const timeString = wibTime.toISOString().substr(11, 8);
+                document.getElementById('current-time').textContent = timeString;
+            }
+            
+            // Initialize current time and update every second
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            
+            // Initialize schedule inputs
+            updateScheduleInputs(0);
+
+            // ========== EXISTING APPLICATION LOGIC ==========
+            
+            // Initialize charts when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeCharts();
+            });
+
+            function toggleSidebar() {
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+                sidebar.classList.toggle('mobile-active');
+                mainContent.classList.toggle('mobile-active');
+            }
+
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (this.getAttribute('href').startsWith('#')) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('href');
+                        const targetSection = document.querySelector(targetId);
+                        if (targetSection) {
+                            targetSection.scrollIntoView({
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            });
+
+            function showNotification(type, title, message) {
+                const notificationList = document.getElementById('notification-list');
+                const notificationItem = document.createElement('div');
+                notificationItem.className = `notification-item p-4 mb-2 rounded-md border-l-4 ${
+                    type === 'critical' ? 'border-red-500 bg-red-50' : 
+                    type === 'warning' ? 'border-yellow-500 bg-yellow-50' : 
+                    'border-green-500 bg-green-50'
+                }`;
+                notificationItem.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="mr-3 text-lg ${
+                            type === 'critical' ? 'text-red-500' : 
+                            type === 'warning' ? 'text-yellow-500' : 
+                            'text-green-500'
+                        }">
+                            <i class="fas fa-${type === 'critical' ? 'exclamation-triangle' : 'exclamation-circle'}"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold">${title}</div>
+                            <div class="text-sm text-gray-600">${message}</div>
+                            <div class="text-xs text-gray-400 mt-1">${new Date().toLocaleTimeString()}</div>
+                        </div>
+                    </div>
+                `;
+                if (notificationList) {
+                    notificationList.prepend(notificationItem);
+                }
+
+                const notification = document.createElement('div');
+                notification.className = `notification ${type} show`;
+                notification.innerHTML = `
+                    <div class="notification-icon">
+                        <i class="fas fa-${type === 'critical' ? 'exclamation-triangle' : 'exclamation-circle'}"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold">${title}</div>
+                        <div class="text-sm">${message}</div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        </script>
+</body>
+</html>
